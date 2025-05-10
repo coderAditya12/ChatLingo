@@ -13,3 +13,13 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+model User {
+  id        String   @id @default(cuid())
+  clerkId String? @unique
+  fullname      String
+  email     String @unique
+  password  String
+  profilePhoto String? @default("https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
