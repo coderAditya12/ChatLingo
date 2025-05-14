@@ -5,6 +5,14 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "forceConsistentCasingInFileNames": true,
-    "strict": true
-  }
+    "strict": true,
+    "paths": {
+      "@prisma/client": ["./node_modules/.prisma/client"],
+      "../generated/prisma/index.js": ["./src/generated/prisma/index"]
+    },
+    "esModuleInterop": true,
+    "moduleResolution": "NodeNext"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
