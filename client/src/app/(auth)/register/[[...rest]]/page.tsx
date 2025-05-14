@@ -3,16 +3,98 @@ import { useState } from "react";
 import { ShipWheelIcon } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { SignUpSchema } from "@/utilis/shema"; // Update with your correct path
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
+interface signupData {
+  fullName: string;
+  email: string;
+  password: string;
+}
 const SignUpPage = () => {
-  const [signupData, setSignupData] = useState({
+  const router = useRouter();
+  const [signupData, setSignupData] = useState<signupData>({
     fullName: "",
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    password?: string;
+    general?: string;
+  }>({});
+  const [isPending, setIsPending] = useState(false);
 
-  const handleSignup = (e: React.FormEvent<HTMLFormElement>) => {
+  // Simple function to handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setSignupData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Clear error when user starts typing again
+    if (errors[name as keyof typeof errors]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+  };
+
+  // Handle form submission
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrors({});
+
+    try {
+      // Basic Zod validation - this is the simplified part
+      const validation = SignUpSchema.parse(signupData);
+      console.log(validation);
+
+      // If validation passes (no error thrown), proceed with submission
+      setIsPending(true);
+
+      // Send data to your API
+      const response = await axios.post(
+        "http://localhost:4000/api/auth/signup",
+        signupData
+      );
+
+      // Handle successful signup
+      if (response.status === 201) {
+        router.push("/Login");
+      }
+    } catch (error: any) {
+      // Handle Zod validation errors
+      if (error.name === "ZodError") {
+        // Convert Zod errors to a simple object
+        const newErrors: any = {};
+        error.errors.forEach((err: any) => {
+          // Get the field name from the path
+          const field = err.path[0];
+          newErrors[field] = err.message;
+        });
+        setErrors(newErrors);
+      }
+      // Handle API errors
+      else if (axios.isAxiosError(error)) {
+        console.log(error);
+        if (error.response?.status === 409) {
+          setErrors({ email: "An account with this email already exists" });
+        } else {
+          setErrors({
+            general: error.response?.data?.message,
+          });
+        }
+      } else {
+        setErrors({ general: "An unexpected error occurred" });
+      }
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -31,12 +113,12 @@ const SignUpPage = () => {
             </span>
           </div>
 
-          {/* ERROR MESSAGE IF ANY */}
-          {/* {error && (
+          {/* GENERAL ERROR MESSAGE */}
+          {errors.general && (
             <div className="alert alert-error mb-4">
-              <span>{error.response.data.message}</span>
+              <span>{errors.general}</span>
             </div>
-          )} */}
+          )}
 
           <div className="w-full">
             <form onSubmit={handleSignup}>
@@ -56,18 +138,24 @@ const SignUpPage = () => {
                     </label>
                     <input
                       type="text"
+                      name="fullName"
                       placeholder="John Doe"
-                      className="input input-bordered w-full"
+                      className={`input input-bordered w-full ${
+                        errors.fullName ? "input-error" : ""
+                      }`}
                       value={signupData.fullName}
-                      onChange={(e) =>
-                        setSignupData({
-                          ...signupData,
-                          fullName: e.target.value,
-                        })
-                      }
+                      onChange={handleInputChange}
                       required
                     />
+                    {errors.fullName && (
+                      <label className="label">
+                        <span className="label-text-alt text-error">
+                          {errors.fullName}
+                        </span>
+                      </label>
+                    )}
                   </div>
+
                   {/* EMAIL */}
                   <div className="form-control w-full">
                     <label className="label">
@@ -75,15 +163,24 @@ const SignUpPage = () => {
                     </label>
                     <input
                       type="email"
+                      name="email"
                       placeholder="john@gmail.com"
-                      className="input input-bordered w-full"
+                      className={`input input-bordered w-full ${
+                        errors.email ? "input-error" : ""
+                      }`}
                       value={signupData.email}
-                      onChange={(e) =>
-                        setSignupData({ ...signupData, email: e.target.value })
-                      }
+                      onChange={handleInputChange}
                       required
                     />
+                    {errors.email && (
+                      <label className="label">
+                        <span className="label-text-alt text-error">
+                          {errors.email}
+                        </span>
+                      </label>
+                    )}
                   </div>
+
                   {/* PASSWORD */}
                   <div className="form-control w-full">
                     <label className="label">
@@ -91,20 +188,26 @@ const SignUpPage = () => {
                     </label>
                     <input
                       type="password"
+                      name="password"
                       placeholder="********"
-                      className="input input-bordered w-full"
+                      className={`input input-bordered w-full ${
+                        errors.password ? "input-error" : ""
+                      }`}
                       value={signupData.password}
-                      onChange={(e) =>
-                        setSignupData({
-                          ...signupData,
-                          password: e.target.value,
-                        })
-                      }
+                      onChange={handleInputChange}
                       required
                     />
-                    <p className="text-xs opacity-70 mt-1">
-                      Password must be at least 6 characters long
-                    </p>
+                    {errors.password ? (
+                      <label className="label">
+                        <span className="label-text-alt text-error">
+                          {errors.password}
+                        </span>
+                      </label>
+                    ) : (
+                      <p className="text-xs opacity-70 mt-1">
+                        Password must be at least 6 characters long
+                      </p>
+                    )}
                   </div>
 
                   <div className="form-control">
@@ -128,7 +231,7 @@ const SignUpPage = () => {
                   </div>
                 </div>
 
-                {/* <button className="btn btn-primary w-full" type="submit">
+                <button className="btn btn-primary w-full" type="submit">
                   {isPending ? (
                     <>
                       <span className="loading loading-spinner loading-xs"></span>
@@ -137,13 +240,13 @@ const SignUpPage = () => {
                   ) : (
                     "Create Account"
                   )}
-                </button> */}
+                </button>
 
                 <div className="text-center mt-4">
                   <p className="text-sm">
                     Already have an account?{" "}
                     <Link
-                      href="/login"
+                      href="/Login"
                       className="text-primary hover:underline"
                     >
                       Sign in
