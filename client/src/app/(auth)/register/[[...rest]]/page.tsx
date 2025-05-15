@@ -6,6 +6,7 @@ import Image from "next/image";
 import { SignUpSchema } from "@/utilis/shema"; // Update with your correct path
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import OAuth from "@/components/OAuth";
 
 interface signupData {
   fullName: string;
@@ -197,16 +198,12 @@ const SignUpPage = () => {
                       onChange={handleInputChange}
                       required
                     />
-                    {errors.password ? (
+                    {errors.password && (
                       <label className="label">
                         <span className="label-text-alt text-error">
                           {errors.password}
                         </span>
                       </label>
-                    ) : (
-                      <p className="text-xs opacity-70 mt-1">
-                        Password must be at least 6 characters long
-                      </p>
                     )}
                   </div>
 
@@ -241,20 +238,18 @@ const SignUpPage = () => {
                     "Create Account"
                   )}
                 </button>
-
-                <div className="text-center mt-4">
-                  <p className="text-sm">
-                    Already have an account?{" "}
-                    <Link
-                      href="/Login"
-                      className="text-primary hover:underline"
-                    >
-                      Sign in
-                    </Link>
-                  </p>
-                </div>
               </div>
             </form>
+            <div className="divider">OR</div>
+            <OAuth />
+            <div className="text-center mt-4">
+              <p className="text-sm">
+                Already have an account?{" "}
+                <Link href="/Login" className="text-primary hover:underline">
+                  Sign in
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
 
