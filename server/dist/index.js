@@ -10,6 +10,15 @@ app.use(cors({
     origin: "http://localhost:3000",
     credentials: true,
 }));
+app.use((err, req, res, next) => {
+    const statusCode = err.statusCode || 500;
+    const message = err.message || "internal server error";
+    res.status(statusCode).json({
+        success: false,
+        statusCode,
+        message,
+    });
+});
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 const server = createServer(app);

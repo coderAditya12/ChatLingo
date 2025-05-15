@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
 import cors from "cors";
@@ -12,6 +12,18 @@ app.use(
     credentials: true,
   })
 );
+interface customError extends Error {
+  statusCode?: number;
+}
+app.use((err: customError, req: Request, res: Response, next: NextFunction) => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "internal server error";
+  res.status(statusCode).json({
+    success: false,
+    statusCode,
+    message,
+  });
+});
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 const server = createServer(app);
