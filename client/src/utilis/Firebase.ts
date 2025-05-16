@@ -5,12 +5,12 @@ import { initializeApp } from "firebase/app";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDVpmr7A1KPCPt8cqetteFbLo8CHAxF0e0",
-  authDomain: "chatlingo-8fbe0.firebaseapp.com",
-  projectId: "chatlingo-8fbe0",
-  storageBucket: "chatlingo-8fbe0.firebasestorage.app",
-  messagingSenderId: "1082943918677",
-  appId: "1:1082943918677:web:544d7ab9fd65dcd68efadc",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase

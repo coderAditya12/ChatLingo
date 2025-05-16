@@ -22,7 +22,7 @@ import { prisma } from "../utilis/db.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import errorHandler from "../middleware/error.js";
-export const signUp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+export const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(req.body);
     // Add type annotation to destructured values
     const { email, fullName, password } = req.body;
@@ -58,11 +58,13 @@ export const signUp = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             sameSite: "lax",
             expires: new Date(Date.now() + 60 * 60 * 1000),
         })
-            .json({ message: "User created successfully", user: userWithoutPassword });
+            .json({
+            message: "User created successfully",
+            user: userWithoutPassword,
+        });
     }
     catch (error) {
-        console.log("error", error);
-        return errorHandler(res, 500, "Server error during user creation");
+        next(error);
     }
 });
 export const signIn = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

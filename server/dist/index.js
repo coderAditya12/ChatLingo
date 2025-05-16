@@ -29,9 +29,6 @@ const io = new Server(server, {
         credentials: true,
     },
 });
-app.get("/", (req, res) => {
-    res.send("Hello World");
-});
 const Port = process.env.PORT;
 server.listen(Port, () => {
     console.log(`Server is running on port ${Port}`);

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { prisma } from "../utilis/db.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -19,11 +19,15 @@ interface User {
   // Add any other fields your User model has
 }
 
-export const signUp = async (req: Request, res: Response) => {
+export const signUp = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   console.log(req.body);
   // Add type annotation to destructured values
   const { email, fullName, password }: UserInput = req.body;
-  
+
   try {
     //user finding
     const existingUser = await prisma.user.findUnique({
@@ -31,13 +35,13 @@ export const signUp = async (req: Request, res: Response) => {
         email: email,
       },
     });
-    
+
     if (existingUser) {
       return errorHandler(res, 409, "User already exists");
     }
-    
+
     const hashedPassword: string = await bcrypt.hash(password, 10);
-    
+
     //user creation
     const newUser: User = await prisma.user.create({
       data: {
@@ -46,10 +50,10 @@ export const signUp = async (req: Request, res: Response) => {
         password: hashedPassword,
       },
     });
-    
+
     //token generation
-    const { password: _, ...userWithoutPassword } = newUser;
-    
+    const { password:_, ...userWithoutPassword } = newUser;
+
     const token: string = jwt.sign(
       { id: newUser.id, email: newUser.email },
       process.env.JWT_SECRET as string,
@@ -66,10 +70,12 @@ export const signUp = async (req: Request, res: Response) => {
         sameSite: "lax",
         expires: new Date(Date.now() + 60 * 60 * 1000),
       })
-      .json({ message: "User created successfully", user: userWithoutPassword });
+      .json({
+        message: "User created successfully",
+        user: userWithoutPassword,
+      });
   } catch (error) {
-    console.log("error", error);
-    return errorHandler(res, 500, "Server error during user creation");
+    next(error);
   }
 };
 export const signIn = async (req: Request, res: Response) => {
