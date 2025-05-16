@@ -100,6 +100,7 @@ export const signIn = async (
         expiresIn: "1h",
       }
     );
+    console.log(token);
     res
       .status(201)
       .cookie("access-token", token, {
@@ -116,6 +117,12 @@ export const signIn = async (
     next(error);
   }
 };
-export const signOut = async (req: Request, res: Response) => {
-  res.json("sign out");
+export const signOut = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  res
+    .clearCookie("access-token")
+    .json({ message: "User signed out successfully" });
 };

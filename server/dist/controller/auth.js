@@ -85,6 +85,7 @@ export const signIn = (req, res, next) => __awaiter(void 0, void 0, void 0, func
         const token = jwt.sign({ id: existingUser.id, email: existingUser.email }, process.env.JWT_SECRET, {
             expiresIn: "1h",
         });
+        console.log(token);
         res
             .status(201)
             .cookie("access-token", token, {
@@ -102,6 +103,8 @@ export const signIn = (req, res, next) => __awaiter(void 0, void 0, void 0, func
         next(error);
     }
 });
-export const signOut = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.json("sign out");
+export const signOut = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    res
+        .clearCookie("access-token")
+        .json({ message: "User signed out successfully" });
 });
