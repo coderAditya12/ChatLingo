@@ -23,7 +23,6 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import errorHandler from "../middleware/error.js";
 export const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(req.body);
     // Add type annotation to destructured values
     const { email, fullName, password } = req.body;
     try {
@@ -67,8 +66,41 @@ export const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, func
         next(error);
     }
 });
-export const signIn = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.json("sign in");
+export const signIn = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, password } = req.body;
+    try {
+        const existingUser = yield prisma.user.findUnique({
+            where: {
+                email: email,
+            },
+        });
+        if (!existingUser) {
+            return errorHandler(res, 404, "User not found");
+        }
+        const isPasswordValid = yield bcrypt.compare(password, existingUser.password);
+        if (!isPasswordValid) {
+            return errorHandler(res, 401, "Invalid password");
+        }
+        const { password: _ } = existingUser, userWithoutPassword = __rest(existingUser, ["password"]);
+        const token = jwt.sign({ id: existingUser.id, email: existingUser.email }, process.env.JWT_SECRET, {
+            expiresIn: "1h",
+        });
+        res
+            .status(201)
+            .cookie("access-token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            expires: new Date(Date.now() + 60 * 60 * 1000),
+        })
+            .json({
+            message: "User created successfully",
+            user: userWithoutPassword,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
 });
 export const signOut = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.json("sign out");
