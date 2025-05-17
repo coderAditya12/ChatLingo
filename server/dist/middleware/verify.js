@@ -5,50 +5,52 @@ const createAccessToken = (user) => {
 };
 // Utility to create refresh token
 const createRefreshToken = (user) => {
-    return jwt.sign(user, process.env.JWT_SECRET);
+    return jwt.sign(user, process.env.JWT_REFRESH_SECRET);
 };
 // Middleware to verify access token and refresh if needed
 export const verifyToken = (req, res, next) => {
     const token = req.cookies.accesstoken;
-    console.log("Token: ", token);
     if (!token) {
-        // If no access token, try to renew using refresh token
-        return renewToken(req, res, next);
+        renewToken(req, res, next);
+        return;
     }
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err) {
-            // If token is invalid or expired, try refresh token
-            return renewToken(req, res, next);
+            renewToken(req, res, next);
+            return;
         }
-        req.user = user;
-        next(); // All good, move on
+        if (user) {
+            req.user = user;
+        }
+        next();
     });
 };
 // Function to renew access token using refresh token
 const renewToken = (req, res, next) => {
     const refreshToken = req.cookies.refreshtoken;
-    console.log("Refresh Token: ", refreshToken);
     if (!refreshToken) {
-        return res
+        res
             .status(401)
             .json({ valid: false, message: "No refresh token provided" });
+        return;
     }
     jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, user) => {
         if (err || !user) {
-            return res
+            res
                 .status(403)
                 .json({ valid: false, message: "Invalid refresh token" });
+            return;
         }
         // Create new access token
         const newAccessToken = createAccessToken(user);
-        // Send new access token in cookie (or send in JSON if you prefer)
+        // Set new access token in cookie
         res.cookie("accesstoken", newAccessToken, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
-            maxAge: 60 * 1000, // 15 minutes
+            maxAge: 15 * 60 * 1000, // 15 minutes
         });
         req.user = user;
-        next(); // continue to next route
+        next();
     });
 };
