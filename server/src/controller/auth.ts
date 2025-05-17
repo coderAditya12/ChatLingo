@@ -3,6 +3,7 @@ import { prisma } from "../utilis/db.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import errorHandler from "../middleware/error.js";
+import { CustomRequest } from "../middleware/verify.js";
 
 // Add interfaces for your types
 interface UserInput {
@@ -51,16 +52,27 @@ export const signUp = async (
       { id: newUser.id, email: newUser.email },
       process.env.JWT_SECRET as string,
       {
-        expiresIn: "1h",
+        expiresIn: "1m",
       }
     );
+    const refreshToken: string = jwt.sign(
+      { id: newUser.id, email: newUser.email },
+      process.env.JWT_REFRESH_SECRET as string,
+      { expiresIn: "1d" }
+    );
+    res.cookie("refreshtoken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: new Date(Date.now() + 24*60*60 * 1000),
+    });
     res
       .status(201)
-      .cookie("access-token", token, {
+      .cookie("accesstoken", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        expires: new Date(Date.now() + 60 * 60 * 1000),
+        expires: new Date(Date.now() + 60 *1000),
       })
       .json({
         message: "User created successfully",
@@ -93,21 +105,27 @@ export const signIn = async (
       return errorHandler(res, 401, "Invalid password");
     }
     const { password: _, ...userWithoutPassword } = existingUser;
-    const token: string = jwt.sign(
+    const accesstoken: string = jwt.sign(
       { id: existingUser.id, email: existingUser.email },
       process.env.JWT_SECRET as string,
-      {
-        expiresIn: "1h",
-      }
+      
     );
-    console.log(token);
+    console.log(accesstoken);
+    const refreshToken: string = jwt.sign(
+      { id: existingUser.id, email: existingUser.email },
+      process.env.JWT_REFRESH_SECRET as string,
+      
+    );
+    res.cookie("refreshtoken", refreshToken, {
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
     res
       .status(201)
-      .cookie("access-token", token, {
+      .cookie("accesstoken", accesstoken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        expires: new Date(Date.now() + 60 * 60 * 1000),
+        expires: new Date(Date.now() +  60 * 1000),
       })
       .json({
         message: "User created successfully",
@@ -118,11 +136,12 @@ export const signIn = async (
   }
 };
 export const signOut = async (
-  req: Request,
+  req: CustomRequest,
   res: Response,
   next: NextFunction
 ) => {
+  res.clearCookie("refreshtoken");
   res
-    .clearCookie("access-token")
+    .clearCookie("accesstoken")
     .json({ message: "User signed out successfully" });
 };

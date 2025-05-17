@@ -4,8 +4,10 @@ import authRoutes from "./routes/auth.js";
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import cookie from "cookie-parser";
 dotenv.config();
 const app = express();
+app.use(cookie())
 app.use(
   cors({
     origin: "http://localhost:3000",

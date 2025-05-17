@@ -47,15 +47,22 @@ export const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, func
         //token generation
         const { password: _ } = newUser, userWithoutPassword = __rest(newUser, ["password"]);
         const token = jwt.sign({ id: newUser.id, email: newUser.email }, process.env.JWT_SECRET, {
-            expiresIn: "1h",
+            expiresIn: "1m",
         });
-        res
-            .status(201)
-            .cookie("access-token", token, {
+        const refreshToken = jwt.sign({ id: newUser.id, email: newUser.email }, process.env.JWT_REFRESH_SECRET, { expiresIn: "1d" });
+        res.cookie("refreshtoken", refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            expires: new Date(Date.now() + 60 * 60 * 1000),
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        });
+        res
+            .status(201)
+            .cookie("accesstoken", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            expires: new Date(Date.now() + 60 * 1000),
         })
             .json({
             message: "User created successfully",
@@ -82,17 +89,19 @@ export const signIn = (req, res, next) => __awaiter(void 0, void 0, void 0, func
             return errorHandler(res, 401, "Invalid password");
         }
         const { password: _ } = existingUser, userWithoutPassword = __rest(existingUser, ["password"]);
-        const token = jwt.sign({ id: existingUser.id, email: existingUser.email }, process.env.JWT_SECRET, {
-            expiresIn: "1h",
+        const accesstoken = jwt.sign({ id: existingUser.id, email: existingUser.email }, process.env.JWT_SECRET);
+        console.log(accesstoken);
+        const refreshToken = jwt.sign({ id: existingUser.id, email: existingUser.email }, process.env.JWT_REFRESH_SECRET);
+        res.cookie("refreshtoken", refreshToken, {
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
         });
-        console.log(token);
         res
             .status(201)
-            .cookie("access-token", token, {
+            .cookie("accesstoken", accesstoken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            expires: new Date(Date.now() + 60 * 60 * 1000),
+            expires: new Date(Date.now() + 60 * 1000),
         })
             .json({
             message: "User created successfully",
@@ -104,7 +113,8 @@ export const signIn = (req, res, next) => __awaiter(void 0, void 0, void 0, func
     }
 });
 export const signOut = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    res.clearCookie("refreshtoken");
     res
-        .clearCookie("access-token")
+        .clearCookie("accesstoken")
         .json({ message: "User signed out successfully" });
 });
