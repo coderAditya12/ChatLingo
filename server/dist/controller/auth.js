@@ -22,21 +22,37 @@ import { prisma } from "../utilis/db.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import errorHandler from "../middleware/error.js";
+// 🔐 Helper function to create tokens and set cookies
+const loginResponse = (user, res) => {
+    const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
+    const accesstoken = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "1m" });
+    const refreshToken = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_REFRESH_SECRET, { expiresIn: "1d" });
+    res.cookie("refreshtoken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
+    });
+    res.cookie("accesstoken", accesstoken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        expires: new Date(Date.now() + 60 * 1000), // 1 minute
+    });
+    res.status(201).json({
+        message: "User logged in successfully",
+        user: userWithoutPassword,
+    });
+};
+// 🚀 Sign Up
 export const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    // Add type annotation to destructured values
     const { email, fullName, password } = req.body;
     try {
-        //user finding
-        const existingUser = yield prisma.user.findUnique({
-            where: {
-                email: email,
-            },
-        });
+        const existingUser = yield prisma.user.findUnique({ where: { email } });
         if (existingUser) {
             return errorHandler(res, 409, "User already exists");
         }
         const hashedPassword = yield bcrypt.hash(password, 10);
-        //user creation
         const newUser = yield prisma.user.create({
             data: {
                 email,
@@ -44,77 +60,56 @@ export const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, func
                 password: hashedPassword,
             },
         });
-        //token generation
-        const { password: _ } = newUser, userWithoutPassword = __rest(newUser, ["password"]);
-        const token = jwt.sign({ id: newUser.id, email: newUser.email }, process.env.JWT_SECRET, {
-            expiresIn: "1m",
-        });
-        const refreshToken = jwt.sign({ id: newUser.id, email: newUser.email }, process.env.JWT_REFRESH_SECRET, { expiresIn: "1d" });
-        res.cookie("refreshtoken", refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        });
-        res
-            .status(201)
-            .cookie("accesstoken", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            expires: new Date(Date.now() + 60 * 1000),
-        })
-            .json({
-            message: "User created successfully",
-            user: userWithoutPassword,
-        });
+        loginResponse(newUser, res);
     }
     catch (error) {
         next(error);
     }
 });
+// 🔐 Sign In
 export const signIn = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
     try {
-        const existingUser = yield prisma.user.findUnique({
-            where: {
-                email: email,
-            },
-        });
-        if (!existingUser) {
+        const user = yield prisma.user.findUnique({ where: { email } });
+        if (!user) {
             return errorHandler(res, 404, "User not found");
         }
-        const isPasswordValid = yield bcrypt.compare(password, existingUser.password);
+        const isPasswordValid = yield bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return errorHandler(res, 401, "Invalid password");
         }
-        const { password: _ } = existingUser, userWithoutPassword = __rest(existingUser, ["password"]);
-        const accesstoken = jwt.sign({ id: existingUser.id, email: existingUser.email }, process.env.JWT_SECRET);
-        console.log(accesstoken);
-        const refreshToken = jwt.sign({ id: existingUser.id, email: existingUser.email }, process.env.JWT_REFRESH_SECRET);
-        res.cookie("refreshtoken", refreshToken, {
-            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        });
-        res
-            .status(201)
-            .cookie("accesstoken", accesstoken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            expires: new Date(Date.now() + 60 * 1000),
-        })
-            .json({
-            message: "User created successfully",
-            user: userWithoutPassword,
-        });
+        loginResponse(user, res);
     }
     catch (error) {
         next(error);
     }
 });
+// 🔓 Google Auth
+export const googleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, email } = req.body;
+    try {
+        let user = yield prisma.user.findUnique({ where: { email } });
+        if (!user) {
+            const generatedPassword = Math.random().toString(36).slice(-8) +
+                Math.random().toString(36).slice(-8);
+            const hashedPassword = yield bcrypt.hash(generatedPassword, 10);
+            user = yield prisma.user.create({
+                data: {
+                    email,
+                    fullname: name,
+                    password: hashedPassword,
+                },
+            });
+        }
+        loginResponse(user, res);
+    }
+    catch (error) {
+        next(error);
+    }
+});
+// 🚪 Sign Out
 export const signOut = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     res.clearCookie("refreshtoken");
-    res
-        .clearCookie("accesstoken")
-        .json({ message: "User signed out successfully" });
+    res.clearCookie("accesstoken");
+    res.json({ message: "User signed out successfully" });
 });

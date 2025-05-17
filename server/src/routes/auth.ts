@@ -1,5 +1,5 @@
 import express, { Response, Router, NextFunction } from "express";
-import { signIn, signOut, signUp } from "../controller/auth.js";
+import { googleAuth, signIn, signOut, signUp } from "../controller/auth.js";
 import { CustomRequest, verifyToken } from "../middleware/verify.js";
 
 const router: Router = express.Router();
@@ -7,6 +7,7 @@ const router: Router = express.Router();
 router.post("/signup", signUp);
 router.post("/signin", signIn);
 router.get("/signout", signOut);
+router.post("/googleauth",googleAuth)
 
 // Fixed route handler with proper typing
 router.get(
