@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useRouter } from "next/router";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
@@ -24,23 +25,24 @@ const userAuthStore = create<userStore>()(
         checkAuth: async () => {
           try {
             const response = await axios.get(
-              `http://localhost:4000/api/verify`,
+              `http://localhost:4000/api/auth/verify`,
               {
                 withCredentials: true,
               }
             );
-            if (response.data.valid) {
+            if (!response.data.valid) {
+              set({
+                isAuthenticated: false,
+                user: null,
+              });
+              window.location.href = "/login"; // Redirect to login if not authenticated
+              console.log("User is not authenticated");
+            } else {
               set({
                 isAuthenticated: true,
                 user: response.data.user,
               });
               console.log("User is authenticated:", response.data.user);
-            } else {
-              set({
-                isAuthenticated: false,
-                user: null,
-              });
-              console.log("User is not authenticated");
             }
           } catch (error) {
             set({
@@ -63,7 +65,6 @@ const userAuthStore = create<userStore>()(
               user: null,
             });
           } catch (error) {
-           
             set({
               isAuthenticated: false,
 
