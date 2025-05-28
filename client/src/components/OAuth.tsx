@@ -1,15 +1,16 @@
-// import { Button } from "flowbite-react";
+"use client";
 import React from "react";
-// import { AiFillGoogleCircle } from "react-icons/ai";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { app } from "@/utilis/Firebase";
-import { AArrowUp } from "lucide-react";
-import { FaGoogle } from "react-icons/fa";
 import { AiFillGoogleCircle } from "react-icons/ai";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import userAuthStore from "@/store/userAuth";
+
 
 const OAuth = () => {
-  const [user, setUser] = React.useState<object | null>(null);
+  const router = useRouter();
+  const setUser = userAuthStore((state) => state.setUser);
   const[loading,setLoading] = React.useState<boolean>(false);
   const [error,setError] = React.useState<string | null>(null);
   let userObject = null;
@@ -29,10 +30,13 @@ const OAuth = () => {
 
       const response = await axios.post(
         "http://localhost:4000/api/auth/googleauth",
-        userObject
+        userObject,{
+          withCredentials:true,
+        }
       );
       if (response.status === 201) {
         setUser(response.data.user);
+        router.push("/dashboard");
       }
       setLoading(false);
     } catch (error:any) {

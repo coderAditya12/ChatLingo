@@ -7,6 +7,7 @@ import { SignUpSchema } from "@/utilis/shema"; // Update with your correct path
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import OAuth from "@/components/OAuth";
+import userAuthStore from "@/store/userAuth";
 
 interface signupData {
   fullName: string;
@@ -26,6 +27,7 @@ const SignUpPage = () => {
     password?: string;
     general?: string;
   }>({});
+  const setUser = userAuthStore((state) => state.setUser);
   const [isPending, setIsPending] = useState(false);
 
   // Simple function to handle input changes
@@ -66,7 +68,8 @@ const SignUpPage = () => {
 
       // Handle successful signup
       if (response.status === 201) {
-        router.push("/Login");
+        setUser(response.data.user);
+        router.push("/dashboard");
       }
     } catch (error: any) {
       // Handle Zod validation errors
