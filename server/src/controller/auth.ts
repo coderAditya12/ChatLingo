@@ -46,11 +46,12 @@ const loginResponse = (user: User, res: Response) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    expires: new Date(Date.now() + 60 * 1000), // 1 minute
+    expires: new Date(Date.now() + 2 + 60 * 1000), // 1 minute
   });
 
   res.status(201).json({
     message: "User logged in successfully",
+    accesstoken,
     user: userWithoutPassword,
   });
 };
