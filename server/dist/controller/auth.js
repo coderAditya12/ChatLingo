@@ -37,7 +37,7 @@ const loginResponse = (user, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        expires: new Date(Date.now() + 2 + 60 * 1000), // 1 minute
+        expires: new Date(Date.now() + 30 + 60 * 1000), // 1 minute
     });
     res.status(201).json({
         message: "User logged in successfully",
@@ -47,6 +47,7 @@ const loginResponse = (user, res) => {
 };
 // 🚀 Sign Up
 export const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Sign Up Request Body:", req.body);
     const { email, fullName, password } = req.body;
     try {
         const existingUser = yield prisma.user.findUnique({ where: { email } });

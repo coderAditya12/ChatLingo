@@ -11,6 +11,7 @@ app.use(cookie())
 app.use(
   cors({
     origin: "http://localhost:3000",
+    methods:"*",
     credentials: true,
   })
 );

@@ -46,7 +46,7 @@ const loginResponse = (user: User, res: Response) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    expires: new Date(Date.now() + 2 + 60 * 1000), // 1 minute
+    expires: new Date(Date.now() + 30 + 60 * 1000), // 1 minute
   });
 
   res.status(201).json({
@@ -62,6 +62,7 @@ export const signUp = async (
   res: Response,
   next: NextFunction
 ) => {
+  console.log("Sign Up Request Body:", req.body);
   const { email, fullName, password }: UserInput = req.body;
 
   try {

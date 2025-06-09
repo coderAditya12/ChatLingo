@@ -10,6 +10,7 @@ const app = express();
 app.use(cookie());
 app.use(cors({
     origin: "http://localhost:3000",
+    methods: "*",
     credentials: true,
 }));
 app.use((err, req, res, next) => {

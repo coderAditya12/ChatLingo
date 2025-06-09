@@ -1,6 +1,6 @@
 
 
-export default function FriendRequestsLayout({
+export default function profileLayout({
   children,
 }: {
   children: React.ReactNode;
