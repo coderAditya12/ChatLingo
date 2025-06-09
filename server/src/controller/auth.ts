@@ -95,7 +95,10 @@ export const signIn = async (
   const { email, password } = req.body;
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { onboarding: true },
+    });
     if (!user) {
       return errorHandler(res, 404, "User not found");
     }

@@ -72,7 +72,10 @@ export const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, func
 export const signIn = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
     try {
-        const user = yield prisma.user.findUnique({ where: { email } });
+        const user = yield prisma.user.findUnique({
+            where: { email },
+            include: { onboarding: true },
+        });
         if (!user) {
             return errorHandler(res, 404, "User not found");
         }

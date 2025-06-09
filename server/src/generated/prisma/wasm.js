@@ -125,6 +125,18 @@ exports.Prisma.UserScalarFieldEnum = {
   fullname: 'fullname',
   email: 'email',
   password: 'password',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OnboardingScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  isOnboarded: 'isOnboarded',
+  bio: 'bio',
+  nativeLanguage: 'nativeLanguage',
+  laerningLanguage: 'laerningLanguage',
+  location: 'location',
   profilePhoto: 'profilePhoto',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -147,7 +159,8 @@ exports.Prisma.NullsOrder = {
 
 
 exports.Prisma.ModelName = {
-  User: 'User'
+  User: 'User',
+  onboarding: 'onboarding'
 };
 
 /**

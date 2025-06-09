@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
+import onboard from "./routes/onboard.js"
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -29,6 +30,8 @@ app.use((err: customError, req: Request, res: Response, next: NextFunction) => {
 });
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/api", onboard);
+
 const server = createServer(app);
 const io = new Server(server, {
   cors: {

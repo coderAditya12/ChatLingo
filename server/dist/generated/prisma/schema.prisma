@@ -15,11 +15,25 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  fullname     String
-  email        String   @unique
-  password     String
-  profilePhoto String?  @default("https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id         String      @id @default(cuid())
+  fullname   String
+  email      String      @unique
+  password   String
+  onboarding onboarding?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model onboarding {
+  id               Int      @id @default(autoincrement())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  isOnboarded      Boolean  @default(false)
+  bio              String?  @default("")
+  nativeLanguage   String?  @default("")
+  laerningLanguage String?  @default("")
+  location         String?  @default("")
+  profilePhoto     String?  @default("https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
