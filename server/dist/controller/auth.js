@@ -23,7 +23,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import errorHandler from "../middleware/error.js";
 // 🔐 Helper function to create tokens and set cookies
-const loginResponse = (user, res) => {
+const loginResponse = (user, res, message) => {
     const { password: _ } = user, userWithoutPassword = __rest(user, ["password"]);
     const accesstoken = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "1m" });
     const refreshToken = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_REFRESH_SECRET, { expiresIn: "1d" });
@@ -40,7 +40,7 @@ const loginResponse = (user, res) => {
         expires: new Date(Date.now() + 30 + 60 * 1000), // 1 minute
     });
     res.status(201).json({
-        message: "User logged in successfully",
+        message,
         accesstoken,
         user: userWithoutPassword,
     });
@@ -62,7 +62,7 @@ export const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, func
                 password: hashedPassword,
             },
         });
-        loginResponse(newUser, res);
+        loginResponse(newUser, res, "signup");
     }
     catch (error) {
         next(error);
@@ -83,7 +83,7 @@ export const signIn = (req, res, next) => __awaiter(void 0, void 0, void 0, func
         if (!isPasswordValid) {
             return errorHandler(res, 401, "Invalid password");
         }
-        loginResponse(user, res);
+        loginResponse(user, res, "signin");
     }
     catch (error) {
         next(error);
@@ -93,7 +93,10 @@ export const signIn = (req, res, next) => __awaiter(void 0, void 0, void 0, func
 export const googleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, email } = req.body;
     try {
-        let user = yield prisma.user.findUnique({ where: { email } });
+        let user = yield prisma.user.findUnique({
+            where: { email },
+            include: { onboarding: true },
+        });
         if (!user) {
             const generatedPassword = Math.random().toString(36).slice(-8) +
                 Math.random().toString(36).slice(-8);
@@ -104,9 +107,12 @@ export const googleAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                     fullname: name,
                     password: hashedPassword,
                 },
+                include: { onboarding: true },
             });
+            loginResponse(user, res, "signup");
+            return;
         }
-        loginResponse(user, res);
+        loginResponse(user, res, "signin");
     }
     catch (error) {
         next(error);

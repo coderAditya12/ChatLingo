@@ -9,6 +9,14 @@ interface userStore {
     email?: string;
     fullName?: string;
   } | null;
+  onboard: {
+    fullName: string;
+    bio: string;
+    nativeLanguage: string;
+    learningLanguage: string;
+    location: string;
+    profilePicture: string;
+  } | null;
   setUser: (user: userStore["user"]) => void;
   checkAuth: () => Promise<boolean>;
   logout: () => Promise<void>;
@@ -20,6 +28,7 @@ const userAuthStore = create<userStore>()(
       (set) => ({
         isAuthenticated: false,
         user: null,
+        onboard: null,
         setUser: (user) => set(() => ({ user })),
         checkAuth: async () => {
           try {

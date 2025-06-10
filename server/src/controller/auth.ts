@@ -20,7 +20,7 @@ interface User {
 }
 
 // 🔐 Helper function to create tokens and set cookies
-const loginResponse = (user: User, res: Response) => {
+const loginResponse = (user: User, res: Response, message: string) => {
   const { password: _, ...userWithoutPassword } = user;
 
   const accesstoken = jwt.sign(
@@ -50,7 +50,7 @@ const loginResponse = (user: User, res: Response) => {
   });
 
   res.status(201).json({
-    message: "User logged in successfully",
+    message,
     accesstoken,
     user: userWithoutPassword,
   });
@@ -80,7 +80,7 @@ export const signUp = async (
       },
     });
 
-    loginResponse(newUser, res);
+    loginResponse(newUser, res, "signup");
   } catch (error) {
     next(error);
   }
@@ -107,8 +107,7 @@ export const signIn = async (
     if (!isPasswordValid) {
       return errorHandler(res, 401, "Invalid password");
     }
-
-    loginResponse(user, res);
+    loginResponse(user, res, "signin");
   } catch (error) {
     next(error);
   }
@@ -123,7 +122,10 @@ export const googleAuth = async (
   const { name, email } = req.body;
 
   try {
-    let user = await prisma.user.findUnique({ where: { email } });
+    let user = await prisma.user.findUnique({
+      where: { email },
+      include: { onboarding: true },
+    });
 
     if (!user) {
       const generatedPassword =
@@ -137,10 +139,13 @@ export const googleAuth = async (
           fullname: name,
           password: hashedPassword,
         },
+        include: { onboarding: true },
       });
+      loginResponse(user, res, "signup");
+      return;
     }
 
-    loginResponse(user, res);
+    loginResponse(user, res, "signin");
   } catch (error) {
     next(error);
   }
