@@ -18,6 +18,7 @@ interface userStore {
     profilePicture: string;
   } | null;
   setUser: (user: userStore["user"]) => void;
+  setOnboard: (onboard: userStore["onboard"]) => void;
   checkAuth: () => Promise<boolean>;
   logout: () => Promise<void>;
 }
@@ -30,6 +31,7 @@ const userAuthStore = create<userStore>()(
         user: null,
         onboard: null,
         setUser: (user) => set(() => ({ user })),
+        setOnboard: (onboard) => set(() => ({ onboard })),
         checkAuth: async () => {
           try {
             const response = await axios.get(

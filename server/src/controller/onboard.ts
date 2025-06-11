@@ -1,7 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { prisma } from "../utilis/db.js";
 
-const onboardController = async (req: Request, res: Response,next:NextFunction) => {
+const onboardController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { userId } = req.params;
   const { bio, nativeLanguage, learningLanguage, location, profilePhoto } =
     req.body;
@@ -24,22 +28,22 @@ const onboardController = async (req: Request, res: Response,next:NextFunction) 
           profilePhoto,
         },
       });
-       res.status(200).json({ onboard: true });
-       return;
+      res.status(200).json({ onboard: true, updatedOnboard });
+      return;
     }
     const newOnboard = await prisma.onboarding.create({
       data: {
         userId,
         bio,
-        isOnboarded:true,
+        isOnboarded: true,
         nativeLanguage,
         laerningLanguage: learningLanguage,
         location,
         profilePhoto,
       },
     });
-     res.status(201).json({ onboard: true, newOnboard });
-     return;
+    res.status(201).json({ onboard: true, newOnboard });
+    return;
   } catch (error) {
     next(error);
   }

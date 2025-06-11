@@ -1,13 +1,15 @@
 "use client";
 import { LANGUAGES } from "@/constants";
 import userAuthStore from "@/store/userAuth";
-import { CameraIcon, LoaderIcon, MapPinIcon, ShipWheelIcon, ShuffleIcon } from "lucide-react";
-import React, {
-  FormEvent,
-  FormEventHandler,
-  ReactElement,
-  useState,
-} from "react";
+import axios from "axios";
+import {
+  CameraIcon,
+  LoaderIcon,
+  MapPinIcon,
+  ShipWheelIcon,
+  ShuffleIcon,
+} from "lucide-react";
+import React, { FormEvent, useState } from "react";
 import toast from "react-hot-toast";
 interface OnboardProps {
   fullName: string;
@@ -17,32 +19,50 @@ interface OnboardProps {
   location: string;
   profilePicture: string;
 }
-const onboard =  () => {
+const onboard = () => {
   const onboard = userAuthStore((state) => state.onboard);
+  const setOnboard = userAuthStore((state) => state.setOnboard);
+  const user = userAuthStore((state) => state.user);
   const [onboardData, setOnboardData] = useState<OnboardProps>({
-    fullName: onboard?.fullName || "",
+    fullName: user?.fullName || "",
     bio: onboard?.bio || "",
     nativeLanguage: onboard?.nativeLanguage || "",
     learningLanguage: onboard?.learningLanguage || "",
     location: onboard?.location || "",
     profilePicture: onboard?.profilePicture || "",
   });
-  const [isPending,setIsPending] = useState<boolean>(false);
-  console.log("onboard user", onboard);
+  const [isPending, setIsPending] = useState<boolean>(false);
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    e.stopPropagation();
+    setIsPending(true);
+    try {
+      const response = await axios.post(
+        `http://localhost:4000/api/onboard/${user?.id}`,
+        onboardData,
+        {
+          withCredentials: true,
+        }
+      );
+      const data = response.data?.updatedOnboard || response.data?.newOnboard;
+      console.log("Onboard response:", data);
+      setIsPending(false);
+      
+      setOnboard(data);
+    } catch (error: any) {
+      console.error("Onboard error:", error);
+      toast.error(error.response?.data?.message || "something went wrong");
+      setIsPending(false);
+    }
   };
-  const handleRandomAvatar = ()=>{
-    const idx = Math.floor(Math.random()*100)+1;
+  const handleRandomAvatar = () => {
+    const idx = Math.floor(Math.random() * 100) + 1;
     const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
     setOnboardData({
       ...onboardData,
       profilePicture: randomAvatar,
     });
     toast.success("Random avatar generated successfully!");
-
-  }
+  };
   return (
     <div className="min-h-screen bg-base-100 flex items-center justify-center p-4 ">
       <div className="card bg-base-200 w-full max-w-3xl shadow-xl">
@@ -74,7 +94,6 @@ const onboard =  () => {
                   type="button"
                   onClick={handleRandomAvatar}
                   className="btn btn-accent"
-                  
                 >
                   <ShuffleIcon className="size-4 mr-2" />
                   Generate Random Avatar

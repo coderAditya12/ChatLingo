@@ -30,7 +30,7 @@ const onboardController = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                     profilePhoto,
                 },
             });
-            res.status(200).json({ onboard: true });
+            res.status(200).json({ onboard: true, updatedOnboard });
             return;
         }
         const newOnboard = yield prisma.onboarding.create({
